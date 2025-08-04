@@ -1,0 +1,29 @@
+https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/
+python -m venv .venv
+Create a new virtual env called .venv (Hidden)
+
+source .venv/bin/activate
+Activate the virtual env
+
+pip list
+Show all the packages installed
+
+pip freeze > requirements.txt
+Set the installed packages into a txt file called requirements
+
+pip install -r requirements.txt
+Install all the packages in the requirements file
+
+deactivate
+Deactivate the virtual env
+
+which python
+Show where Python is ran from
+
+python -m pip install --upgrade pip
+Upgrade pip
+
+python -m pip install yfinance
+python -m pip install --upgrade yfinance
+Install/Upgrade the package in the virtual env
+
