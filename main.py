@@ -3,7 +3,7 @@ import pandas as pd
 import datetime as dt
 
 from local_sources import tickets
-from functions import general_functions
+from functions import general, file
 
 def compute_rsi(prices:pd.Series, period=14) -> pd.Series:
     """Calculate the Relative Strength Index"""
@@ -12,12 +12,12 @@ def compute_rsi(prices:pd.Series, period=14) -> pd.Series:
     loss = -delta.clip(upper=0)
     avg_gain = gain.rolling(window=period, min_periods=period).mean()
     avg_loss = loss.rolling(window=period, min_periods=period).mean()
-    # general_functions.display_df_tail(prices, 'Prices')
-    # general_functions.display_df_tail(delta, 'Delta')
-    # general_functions.display_df_tail(gain, 'Gain')
-    # general_functions.display_df_tail(loss, 'Loss')
-    # general_functions.display_df_tail(avg_gain, 'Avg Gain')
-    # general_functions.display_df_tail(avg_loss, 'Avg Loss')
+    # general.display_df_tail(prices, 'Prices')
+    # general.display_df_tail(delta, 'Delta')
+    # general.display_df_tail(gain, 'Gain')
+    # general.display_df_tail(loss, 'Loss')
+    # general.display_df_tail(avg_gain, 'Avg Gain')
+    # general.display_df_tail(avg_loss, 'Avg Loss')
     #
     # rolling(): It's about aggregating data over a dynamic window to reveal patterns or smooth variations.
     # clip(): It's about constraining individual data points within a defined range to handle outliers or enforce business rules.
@@ -43,7 +43,7 @@ def get_stock_info(ticker_symbol:str, period:int=60) -> dict:
     analysis = []
     ticker = yf.Ticker(ticker_symbol)
     info = ticker.info
-    # general_functions.print_as_json(info)
+    # general.print_as_json(info)
     history = ticker.history(period=f'{period}d')
     close_history = history['Close']
     close = close_history.iloc[-1]
@@ -86,9 +86,11 @@ def get_stock_info(ticker_symbol:str, period:int=60) -> dict:
     return relevant_info, analysis
 
 def main():
+    tickets_info = []
     for ticket in tickets.TICKETS:
         period = 180
         info, analysis = get_stock_info(ticket, period)
+        tickets_info.append(info)
         
         print(f"\n{'-'*10} Stock Behaviour Signals ({period} days) {'-'*10}")
         for key, val in info.items():
@@ -97,6 +99,8 @@ def main():
         if len(analysis) > 0:
             print(f"\n{'-'*10} Analysis ({period} days) {'-'*10}")
             [print(f'- {row}') for row in analysis]
+
+    file.create_csv_from_dict(tickets_info)
 
 if __name__ == "__main__":
     main()
