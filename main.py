@@ -53,25 +53,33 @@ def get_stock_info(ticker_symbol:str, period:int=60) -> dict:
     rsi_14 = compute_rsi(close_history, 14)
     overbought = rsi_14.iloc[-1] > 70
     oversold = rsi_14.iloc[-1] < 30
-    earnings_date = ticker.calendar['Earnings Date'][0]
-    day_to_earnings = (earnings_date - dt.datetime.today().date()).days if not pd.isna(earnings_date) else None
+    if not ticker.calendar: # print('HTTP Error 404', type(ticker), type(ticker.calendar), ticker.calendar)
+        earnings_dates = []
+    else:
+        earnings_dates = ticker.calendar.get('Earnings Date', [])
+    if len(earnings_dates) > 0:
+        earnings_date = ticker.calendar['Earnings Date'][0]
+        day_to_earnings = (earnings_date - dt.datetime.today().date()).days if not pd.isna(earnings_date) else None
+    else:
+        earnings_date = "N/A"
+        day_to_earnings = "N/A"
 
     # Analysis
     if volume_spike:
         analysis.append("Volume is spiking, something's happening. Watch the price closely.")
-    if day_to_earnings >= 7 and day_to_earnings <= 10:
+    if day_to_earnings != "N/A" and day_to_earnings >= 7 and day_to_earnings <= 10:
         analysis.append("Close earning date, volatility may increase.")
     if overbought:
         analysis.append("Likely overbought, might fall.")
     elif overbought:
         analysis.append("Oversold, potential rebound.")
 
-
     relevant_info = {
         "Ticker": ticker_symbol,
         "Name": info.get('displayName'),
         "Short Name": info.get('shortName'),
         "Long Name": info.get('longName'),
+        "Type": info.get('quoteType'),
         "Current Price": round(close, 2),
         '52-week Low': info.get('fiftyTwoWeekLow'),
         '52-week High': info.get('fiftyTwoWeekHigh'),
@@ -82,23 +90,27 @@ def get_stock_info(ticker_symbol:str, period:int=60) -> dict:
         "Oversold": oversold,
         "Earnings Date": earnings_date,
         "Days to Earnings": day_to_earnings,
+        "Country": info.get('country'),
+        "Industry": info.get('industry'),
     }
     return relevant_info, analysis
 
 def main():
     tickets_info = []
-    for ticket in tickets.TICKETS:
+    print(f"[Analysis for {len(tickets.TICKETS)} tickets]")
+    for i, ticket in enumerate(tickets.TICKETS):
         period = 180
+        print(f"{i + 1}. {ticket}")
         info, analysis = get_stock_info(ticket, period)
         tickets_info.append(info)
         
-        print(f"\n{'-'*10} Stock Behaviour Signals ({period} days) {'-'*10}")
-        for key, val in info.items():
-            print(f"{key}: {val}")
+        # print(f"\n{'-'*10} Stock Behaviour Signals ({period} days) {'-'*10}")
+        # for key, val in info.items():
+        #     print(f"{key}: {val}")
         
-        if len(analysis) > 0:
-            print(f"\n{'-'*10} Analysis ({period} days) {'-'*10}")
-            [print(f'- {row}') for row in analysis]
+        # if len(analysis) > 0:
+        #     print(f"\n{'-'*10} Analysis ({period} days) {'-'*10}")
+        #     [print(f'- {row}') for row in analysis]
 
     file.create_csv_from_dict(tickets_info)
 
